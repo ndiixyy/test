@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xentrix Store - Role APK Xentrix</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --wa-green: #25d366;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { background: var(--bg-dark); color: var(--text-main); padding: 16px 20px 36px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 540px; flex: 1; display: flex; flex-direction: column; }
+
+    /* GELEMBUNG NOTIFIKASI WA ADMIN DI ATAS */
+    .wa-bubble-wrapper { position: sticky; top: 12px; z-index: 90; display: flex; justify-content: center; margin-bottom: 16px; }
+    .wa-bubble { display: inline-flex; align-items: center; gap: 10px; background: rgba(30, 41, 59, 0.92); backdrop-filter: blur(8px); border: 1px solid rgba(37, 211, 102, 0.45); color: var(--text-main); text-decoration: none; padding: 8px 16px; border-radius: 999px; font-size: 12.5px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45); transition: transform 0.2s, border-color 0.2s, background 0.2s; cursor: pointer; }
+    .wa-bubble:hover { transform: translateY(-2px); border-color: var(--wa-green); background: rgba(30, 41, 59, 1); }
+    .pulse-dot { width: 9px; height: 9px; background-color: var(--wa-green); border-radius: 50%; position: relative; flex-shrink: 0; }
+    .pulse-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--wa-green); animation: pulseRing 1.6s infinite ease-out; }
+    @keyframes pulseRing { 0% { transform: scale(0.7); opacity: 0.9; } 100% { transform: scale(1.8); opacity: 0; } }
+    .wa-bubble-cta { color: var(--wa-green); font-weight: 700; margin-left: 2px; }
+
+    /* TOPBAR */
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); gap: 8px; }
+    .brand { font-weight: 800; font-size: 17px; letter-spacing: 0.5px; }
+    .nav-group { display: flex; gap: 6px; }
+    .nav-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 8px; font-size: 12.5px; cursor: pointer; }
+    .nav-btn:hover { color: var(--text-main); border-color: var(--accent); }
+
+    /* BANNER TOKO TUTUP */
+    .closed-banner { display: none; background: rgba(239, 68, 68, 0.14); border: 1px solid var(--danger); color: #fca5a5; padding: 12px 14px; border-radius: 12px; font-size: 13px; margin-bottom: 16px; text-align: center; }
+
+    /* KARTU PRODUK */
+    .product-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px; cursor: pointer; transition: 0.2s; }
+    .product-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .badge { display: inline-block; background: rgba(59, 130, 246, 0.2); color: #60a5fa; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-bottom: 10px; }
+    .product-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .product-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
+    .product-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px; }
+    .price-start { font-size: 13px; color: var(--text-muted); }
+    .price-start span { display: block; font-size: 16px; font-weight: 700; color: var(--success); }
+
+    /* BUTTONS */
+    .btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { background: #475569; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-acc { background: var(--success); padding: 8px 14px; font-size: 13px; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.78); justify-content: center; align-items: center; padding: 16px; z-index: 100; }
+    .modal-box { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 16px; padding: 22px; border: 1px solid var(--border); max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; line-height: 1; }
+    .role-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; max-height: 330px; overflow-y: auto; }
+    .role-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .role-item.trial-item { border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.06); }
+    .role-item.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.18); }
+    .role-info h4 { font-size: 15px; margin-bottom: 2px; }
+    .role-info p { font-size: 12px; color: var(--text-muted); }
+    .role-price { font-weight: 700; color: var(--success); font-size: 14px; white-space: nowrap; margin-left: 10px; }
+
+    .legal-body { overflow-y: auto; font-size: 13px; color: var(--text-muted); line-height: 1.65; padding-right: 4px; }
+    .legal-body h4 { color: var(--text-main); font-size: 14px; margin: 12px 0 4px; }
+    .legal-body h4:first-child { margin-top: 0; }
+    .legal-body ul { padding-left: 18px; margin-bottom: 8px; }
+    .legal-body li { margin-bottom: 4px; }
+
+    /* PANELS */
+    .card-panel { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .summary-box { background: var(--bg-dark); padding: 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px; margin-bottom: 16px; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .summary-row:last-child { margin-bottom: 0; padding-top: 8px; border-top: 1px dashed var(--border); font-weight: 700; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+    .input-group input { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-main); font-size: 14px; }
+    .input-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; }
+
+    /* KOTAK PEMBAYARAN QRIS */
+    .qris-box { background: var(--bg-dark); border: 1px solid var(--accent); border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px; }
+    .qris-badge { display: inline-block; background: rgba(59, 130, 246, 0.2); color: #60a5fa; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 8px; }
+    .qris-box img { width: 185px; height: 185px; border-radius: 10px; margin: 10px 0; background: white; padding: 6px; object-fit: contain; }
+
+    /* STATUS & DATA PESANAN */
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 11px; }
+    .status-PENDING { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .status-ACC { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .status-DITOLAK { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+    .delivery-box { display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 10px; padding: 14px; margin-bottom: 16px; text-align: left; }
+    .delivery-box h4 { color: var(--success); font-size: 14px; margin-bottom: 8px; }
+    .delivery-content { background: var(--bg-dark); padding: 10px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; margin-bottom: 10px; border: 1px solid var(--border); }
+
+    /* RIWAYAT */
+    .order-item { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .order-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .order-meta { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+    .sent-data-preview { background: var(--card-bg); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #e2e8f0; margin-top: 8px; white-space: pre-wrap; word-break: break-all; border: 1px solid var(--border); }
+    .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .search-bar input { flex: 1; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-main); font-size: 13px; }
+
+    /* FOOTER */
+    .site-footer { margin-top: auto; padding-top: 32px; }
+    .footer-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px 18px; text-align: center; }
+    .footer-brand { font-weight: 800; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .footer-tagline { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+    .footer-status-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); color: var(--success); font-size: 11.5px; font-weight: 600; padding: 4px 12px; border-radius: 999px; margin-bottom: 18px; }
+    .footer-status-pill.closed { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .status-dot-small { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+
+    .social-grid { display: flex; justify-content: center; gap: 12px; margin-bottom: 18px; }
+    .social-box { width: 46px; height: 46px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 13px; display: flex; align-items: center; justify-content: center; color: var(--text-main); text-decoration: none; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+    .social-box svg { width: 22px; height: 22px; }
+    .social-box:hover { transform: translateY(-3px); }
+    .social-box.tiktok:hover { border-color: #fe2c55; box-shadow: 0 6px 14px rgba(254, 44, 85, 0.25); }
+    .social-box.instagram:hover { border-color: #e1306c; box-shadow: 0 6px 14px rgba(225, 48, 108, 0.25); }
+    .social-box.whatsapp:hover { border-color: #25d366; box-shadow: 0 6px 14px rgba(37, 211, 102, 0.25); }
+    .social-box.telegram:hover { border-color: #26a5e4; box-shadow: 0 6px 14px rgba(38, 165, 228, 0.25); }
+
+    .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+    .footer-link-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+    .footer-link-btn:hover { color: #60a5fa; text-decoration: underline; }
+    .footer-disclaimer { font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 8px; }
+    .footer-copy { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- GELEMBUNG NOTIFIKASI DI ATAS WEBSITE -->
+  <div class="wa-bubble-wrapper">
+    <a id="wa-help-bubble" href="#" target="_blank" rel="noopener" class="wa-bubble">
+      <span class="pulse-dot"></span>
+      <span>Ada kendala order / trial? <span class="wa-bubble-cta">Chat Admin WA →</span></span>
+    </a>
+  </div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">XENTRIX STORE</div>
+    <div class="nav-group">
+      <button class="nav-btn" onclick="tampilkanHalaman('catalog-page')">Store</button>
+      <button class="nav-btn" onclick="bukaHalamanRiwayat()">Riwayat</button>
+    </div>
+  </div>
+
+  <div id="closed-banner" class="closed-banner">
+    ⚠️ Toko sedang tutup sementara. Silakan kembali pada jam operasional atau hubungi Admin WA.
+  </div>
+
+  <!-- 1. HALAMAN KATALOG PRODUK -->
+  <div id="catalog-page">
+    <div class="product-card" onclick="bukaModalHarga()">
+      <span class="badge" id="catalog-badge">APK ACCESS</span>
+      <h2 class="product-title">Harga Role Apk Xentrix</h2>
+      <p class="product-desc">Pilih paket role sesuai kebutuhanmu. Data akun/key dikirim langsung setelah admin ACC.</p>
+      <div class="product-footer">
+        <div class="price-start">Mulai dari <span id="harga-mulai">Memuat...</span></div>
+        <button class="btn" type="button">Pilih Paket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2A. HALAMAN CHECKOUT KHUSUS FREE TRIAL -->
+  <div id="trial-checkout-page" class="card-panel">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+      <button class="btn btn-outline" style="padding: 6px 12px;" onclick="tampilkanHalaman('catalog-page')">← Batal</button>
+      <h3 style="font-size: 17px;">Checkout Free Trial</h3>
+    </div>
+
+    <div class="summary-box" style="border-color: rgba(16, 185, 129, 0.45);">
+      <div class="summary-row"><span>Paket</span><strong style="color: var(--success);">🎁 FREE TRIAL APK XENTRIX</strong></div>
+      <div class="summary-row"><span>Keterangan</span><span id="trial-info-desc">Akses uji coba gratis 1 akun</span></div>
+      <div class="summary-row"><span>Ketentuan</span><span>1 IP / Perangkat hanya 1x klaim</span></div>
+      <div class="summary-row"><span>Total Biaya</span><span style="color: var(--success);">Rp 0 (GRATIS)</span></div>
+    </div>
+
+    <div class="input-group">
+      <label>Nama Username untuk Login Aplikasi</label>
+      <input type="text" id="trial-username" placeholder="Masukkan username yang diinginkan...">
+      <div class="input-hint">*Setelah klik konfirmasi, permintaan akan masuk ke Admin untuk di-ACC.</div>
+    </div>
+
+    <button class="btn btn-acc" style="width: 100%; padding: 13px; font-size: 15px;" id="btn-submit-trial" onclick="kirimRequestTrial()">
+      Konfirmasi Free Trial
+    </button>
+  </div>
+
+  <!-- 2B. HALAMAN CHECKOUT PAKET BERBAYAR (QRIS) -->
+  <div id="paid-checkout-page" class="card-panel">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+      <button class="btn btn-outline" style="padding: 6px 12px;" onclick="tampilkanHalaman('catalog-page')">← Batal</button>
+      <h3 style="font-size: 17px;">Checkout Paket Role</h3>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-row"><span>Produk</span><span>Role Apk Xentrix</span></div>
+      <div class="summary-row"><span>Paket</span><span id="checkout-role-name">-</span></div>
+      <div class="summary-row"><span>Metode</span><span>QRIS (All Payment)</span></div>
+      <div class="summary-row"><span>Total Bayar</span><span id="checkout-total" style="color: var(--success);">Rp 0</span></div>
+    </div>
+
+    <div class="input-group">
+      <label>Username untuk Login ke Aplikasi</label>
+      <input type="text" id="paid-username" placeholder="Contoh: andixentrix (tanpa spasi)">
+    </div>
+
+    <div class="input-group">
+      <label>Nomor WhatsApp / Kontak Aktif</label>
+      <input type="text" id="paid-contact" placeholder="Contoh: 0858xxxx">
+    </div>
+
+    <div class="qris-box">
+      <span class="qris-badge">PEMBAYARAN QRIS</span>
+      <p style="font-size: 12px; color: var(--text-muted);">Scan QRIS di bawah menggunakan DANA, GoPay, OVO, ShopeePay, atau M-Banking:</p>
+      <img id="qris-image" src="" alt="QRIS">
+      <p style="font-size: 12px; color: #fbbf24;">Setelah transfer berhasil, klik tombol konfirmasi di bawah.</p>
+    </div>
+
+    <button class="btn" style="width: 100%; padding: 13px;" id="btn-submit-paid" onclick="kirimRequestPaid()">
+      Konfirmasi Pembayaran
+    </button>
+  </div>
+
+  <!-- 3. HALAMAN STATUS PESANAN / TRIAL REALTIME -->
+  <div id="status-page" class="card-panel" style="text-align: center;">
+    <h3 style="margin-bottom: 6px;">Status Permintaan Kamu</h3>
+    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Permintaan sudah masuk ke Admin. Data akun otomatis muncul di bawah setelah di-ACC.</p>
+    
+    <div class="summary-box" style="text-align: left;">
+      <div class="summary-row"><span>ID Request</span><strong id="track-id">-</strong></div>
+      <div class="summary-row"><span>Paket</span><span id="track-role">-</span></div>
+      <div class="summary-row"><span>Username APK</span><strong id="track-username" style="color: #60a5fa;">-</strong></div>
+      <div class="summary-row"><span>Biaya</span><span id="track-harga">-</span></div>
+      <div class="summary-row" style="align-items: center;">
+        <span>Status</span>
+        <span id="track-status" class="status-badge status-PENDING">MENUNGGU ACC</span>
+      </div>
+    </div>
+
+    <div id="buyer-delivery-box" class="delivery-box">
+      <h4>✓ Sudah Di-ACC Admin! Ini Data Akun Kamu:</h4>
+      <div class="delivery-content" id="buyer-delivery-text"></div>
+      <button class="btn btn-acc" style="width: 100%;" onclick="salinTeksLangsung(document.getElementById('buyer-delivery-text').innerText)">Salin Data</button>
+    </div>
+
+    <div id="buyer-rejected-box" style="display:none; background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 13px; color: #fca5a5;">
+      Permintaan ditolak admin. Alasan: <strong id="buyer-rejected-reason">-</strong>
+    </div>
+
+    <button class="btn btn-outline" style="width: 100%;" onclick="bukaHalamanRiwayat()">Lihat Semua Riwayat</button>
+  </div>
+
+  <!-- 4. HALAMAN RIWAYAT -->
+  <div id="history-page" class="card-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3>Riwayat Trial & Pembelian</h3>
+      <button class="nav-btn" onclick="muatRiwayatPelanggan()">Refresh</button>
+    </div>
+    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+      Riwayat di perangkat ini muncul otomatis, atau cari pakai ID Request kamu:
+    </p>
+    <div class="search-bar">
+      <input type="text" id="history-search-input" placeholder="Masukkan ID (TRIAL-xxxx / XTX-xxxx)...">
+      <button class="btn" style="padding: 8px 14px; font-size: 13px;" onclick="cariRiwayatManual()">Cari</button>
+    </div>
+    <div id="history-list">
+      <p style="color: var(--text-muted); font-size: 13px;">Memuat riwayat...</p>
+    </div>
+  </div>
+
+  <!-- FOOTER PALING BAWAH -->
+  <footer class="site-footer">
+    <div class="footer-card">
+      <div class="footer-brand">XENTRIX STORE</div>
+      <p class="footer-tagline">Layanan resmi aktivasi Role & Akses APK Xentrix. Verifikasi cepat dan transparan langsung oleh admin.</p>
+
+      <div id="footer-status-pill" class="footer-status-pill">
+        <span class="status-dot-small"></span>
+        <span id="footer-status-text">Memuat status toko...</span>
+      </div>
+
+      <div class="social-grid">
+        <a id="sosmed-tiktok" href="#" target="_blank" rel="noopener" class="social-box tiktok" title="TikTok Resmi">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+        </a>
+
+        <a id="sosmed-instagram" href="#" target="_blank" rel="noopener" class="social-box instagram" title="Instagram Resmi">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+
+        <a id="sosmed-whatsapp" href="#" target="_blank" rel="noopener" class="social-box whatsapp" title="WhatsApp Resmi">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 2c-5.516 0-9.969 4.453-9.969 9.969 0 1.758.459 3.475 1.331 4.988L2 22l5.184-1.359a9.927 9.927 0 0 0 4.847 1.258h.004c5.515 0 9.969-4.454 9.969-9.969A9.936 9.936 0 0 0 19.08 4.92 9.903 9.903 0 0 0 12.031 2zm5.805 14.23c-.244.688-1.418 1.316-1.965 1.398-.503.076-1.141.108-1.842-.115-.426-.135-.973-.316-1.674-.619-2.946-1.272-4.87-4.238-5.017-4.434-.147-.196-1.198-1.593-1.198-3.039 0-1.446.758-2.157 1.027-2.451.269-.294.587-.368.783-.368.196 0 .391.002.562.01.18.009.422-.068.66.504.244.588.831 2.034.904 2.181.073.147.122.318.024.514-.098.196-.147.318-.294.49-.147.171-.309.382-.441.514-.147.147-.3.306-.129.6.171.294.761 1.255 1.634 2.033 1.123 1.001 2.069 1.312 2.363 1.459.294.147.465.122.636-.073.171-.196.734-.857.93-1.151.196-.294.391-.245.66-.147.269.098 1.713.808 2.006.955.294.147.49.22.563.343.073.122.073.71-.171 1.398z"/></svg>
+        </a>
+
+        <a id="sosmed-telegram" href="#" target="_blank" rel="noopener" class="social-box telegram" title="Telegram Resmi">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        </a>
+      </div>
+
+      <nav class="footer-links">
+        <button type="button" class="footer-link-btn" onclick="bukaModalLegal('privasi')">Kebijakan Privasi</button>
+        <button type="button" class="footer-link-btn" onclick="bukaModalLegal('legal')">Syarat & Legal</button>
+        <button type="button" class="footer-link-btn" onclick="bukaModalLegal('kontak')">Kontak Resmi</button>
+        <button type="button" class="footer-link-btn" onclick="bukaModalLegal('faq')">Panduan & FAQ</button>
+      </nav>
+
+      <p class="footer-disclaimer">
+        Pastikan hanya bertransaksi melalui nomor & akun resmi yang tercantum di halaman ini. Kami tidak bertanggung jawab atas transaksi di luar kontak resmi Xentrix Store.
+      </p>
+      <p class="footer-copy">© 2026 Xentrix Store • All Rights Reserved.</p>
+    </div>
+  </footer>
+</div>
+
+<!-- MODAL PILIH PAKET HARGA -->
+<div class="modal-overlay" id="modal-harga">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 style="font-size: 17px;">Pilih Paket Role Apk Xentrix</h3>
+      <button class="close-btn" onclick="tutupModalHarga()">&times;</button>
+    </div>
+    <div class="role-list" id="role-list-container"></div>
+    <button class="btn" id="btn-lanjut-checkout" style="width: 100%; padding: 12px;" disabled onclick="keHalamanCheckout()">
+      Lanjutkan
+    </button>
+  </div>
+</div>
+
+<!-- MODAL INFORMASI PRIVASI, LEGAL, KONTAK & FAQ -->
+<div class="modal-overlay" id="modal-legal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-legal-title" style="font-size: 16px;">Informasi</h3>
+      <button class="close-btn" onclick="tutupModalLegal()">&times;</button>
+    </div>
+    <div id="modal-legal-content" class="legal-body"></div>
+    <button class="btn btn-outline" style="width: 100%; margin-top: 16px;" onclick="tutupModalLegal()">Tutup</button>
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // CUKUP ISI URL SERVER API DI SINI (SISANYA DIATUR LEWAT BOT TELEGRAM)
+  // =========================================================================
+  const API_BASE_URL = "http://panel21.ikyhost.cloud:3116";
+
+  let appConfig = null;
+  let paketTerpilih = null;
+  let intervalCekStatus = null;
+
+  function formatRupiah(angka) {
+    if (angka === 0) return "GRATIS";
+    return "Rp " + Number(angka).toLocaleString("id-ID");
+  }
+
+  // Ambil seluruh pengaturan terbaru dari server saat web dibuka
+  async function muatKonfigurasiWeb() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/config`);
+      appConfig = await res.json();
+
+      // 1. Update Status Toko & Jam Operasional
+      const pill = document.getElementById("footer-status-pill");
+      const statusText = document.getElementById("footer-status-text");
+      if (appConfig.tokoBuka) {
+        pill.classList.remove("closed");
+        statusText.innerText = `Sistem Aktif • Operasional ${appConfig.jamOperasional}`;
+        document.getElementById("closed-banner").style.display = "none";
+      } else {
+        pill.classList.add("closed");
+        statusText.innerText = `Toko Tutup Sementara • ${appConfig.jamOperasional}`;
+        document.getElementById("closed-banner").style.display = "block";
+      }
+
+      // 2. Update Gambar QRIS & Link Sosmed
+      document.getElementById("qris-image").src = appConfig.qrisUrl;
+      const pesanWa = "Halo Admin Xentrix Store, saya mengalami kendala saat klaim trial / order di website.";
+      const linkWa = `https://wa.me/${appConfig.waAdmin}?text=${encodeURIComponent(pesanWa)}`;
+      document.getElementById("wa-help-bubble").href = linkWa;
+      document.getElementById("sosmed-whatsapp").href = linkWa;
+      document.getElementById("sosmed-tiktok").href = appConfig.tiktokUrl;
+      document.getElementById("sosmed-instagram").href = appConfig.instagramUrl;
+      document.getElementById("sosmed-telegram").href = appConfig.telegramUrl;
+
+      // 3. Render Daftar Paket (Free Trial jika aktif + Daftar Role dari Bot)
+      const container = document.getElementById("role-list-container");
+      container.innerHTML = "";
+
+      const daftarGabungan = [];
+      if (appConfig.trialAktif) {
+        daftarGabungan.push({
+          isTrial: true,
+          nama: "🎁 FREE TRIAL",
+          deskripsi: appConfig.trialDeskripsi,
+          harga: 0
+        });
+        document.getElementById("catalog-badge").innerText = "APK ACCESS + FREE TRIAL";
+        document.getElementById("harga-mulai").innerText = "GRATIS (Trial)";
+      } else {
+        document.getElementById("catalog-badge").innerText = "APK ACCESS";
+        const minHarga = Math.min(...appConfig.paketList.map(p => p.harga));
+        document.getElementById("harga-mulai").innerText = formatRupiah(minHarga);
+      }
+
+      appConfig.paketList.forEach(p => {
+        daftarGabungan.push({ isTrial: false, nama: p.nama, deskripsi: p.deskripsi, harga: p.harga });
+      });
+
+      daftarGabungan.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "role-item" + (item.isTrial ? " trial-item" : "");
+        div.onclick = () => {
+          paketTerpilih = item;
+          document.querySelectorAll(".role-item").forEach(el => el.classList.remove("selected"));
+          div.classList.add("selected");
+          const btn = document.getElementById("btn-lanjut-checkout");
+          btn.disabled = false;
+          btn.innerText = item.isTrial ? "Lanjut ke Checkout Trial" : "Beli Sekarang";
+        };
+        div.innerHTML = `
+          <div class="role-info"><h4>${item.nama}</h4><p>${item.deskripsi}</p></div>
+          <div class="role-price">${formatRupiah(item.harga)}</div>
+        `;
+        container.appendChild(div);
+      });
+    } catch (err) {
+      document.getElementById("harga-mulai").innerText = "Gagal memuat server";
+    }
+  }
+
+  function bukaModalLegal(tipe) {
+    const wa = appConfig ? appConfig.waAdmin : "-";
+    const tg = appConfig ? appConfig.telegramUrl : "#";
+    const ig = appConfig ? appConfig.instagramUrl : "#";
+    const tt = appConfig ? appConfig.tiktokUrl : "#";
+    const jam = appConfig ? appConfig.jamOperasional : "08.00 – 23.00 WIB";
+
+    const konten = {
+      privasi: {
+        judul: "Kebijakan Privasi",
+        isi: `
+          <h4>1. Data yang Dikumpulkan</h4>
+          <p>Xentrix Store hanya mengumpulkan data minimal yang diperlukan untuk aktivasi akun APK Xentrix, meliputi <strong>Username Aplikasi</strong>, <strong>Nomor WhatsApp/Kontak</strong>, serta pencatatan <strong>Alamat IP</strong>.</p>
+          <h4>2. Tujuan Penggunaan Data</h4>
+          <ul>
+            <li>Mendaftarkan username dan role yang kamu pilih pada sistem APK Xentrix.</li>
+            <li>Mencegah penyalahgunaan fitur <strong>Free Trial</strong> (pembatasan 1 perangkat/IP untuk 1 akun trial) serta perlindungan anti-spam.</li>
+          </ul>
+          <h4>3. Keamanan & Kerahasiaan</h4>
+          <p>Kami tidak pernah membagikan data pelanggan kepada pihak ketiga mana pun. Riwayat pesanan bersifat privat dan hanya dapat diakses melalui kode ID pesanan milik masing-masing pembeli.</p>
+        `
+      },
+      legal: {
+        judul: "Syarat, Ketentuan & Legal",
+        isi: `
+          <h4>1. Ketentuan Produk Digital</h4>
+          <p>Seluruh produk berupa akses Role & Akun APK Xentrix merupakan produk digital. Pembeli wajib memastikan username yang diinput pada halaman checkout sudah benar sebelum menekan konfirmasi.</p>
+          <h4>2. Aturan Free Trial</h4>
+          <ul>
+            <li>Setiap 1 alamat IP / perangkat hanya berhak mendapatkan maksimal <strong>1 kali akun Free Trial</strong>.</li>
+            <li>Setelah masa trial berakhir atau kuota trial terpakai, pengguna wajib membeli paket role berbayar untuk melanjutkan penggunaan.</li>
+          </ul>
+          <h4>3. Kebijakan Pengembalian Dana (Refund)</h4>
+          <p>Transaksi yang sudah terverifikasi dan akun/role telah dikirimkan (status <strong>ACC</strong>) tidak dapat dibatalkan atau di-refund.</p>
+        `
+      },
+      kontak: {
+        judul: "Kontak Resmi Admin Xentrix Store",
+        isi: `
+          <h4>Saluran Komunikasi Terverifikasi</h4>
+          <ul>
+            <li><strong>WhatsApp Admin:</strong> +${wa}</li>
+            <li><strong>Telegram Resmi:</strong> <a href="${tg}" target="_blank" style="color:#60a5fa;">Buka Telegram Admin</a></li>
+            <li><strong>Instagram:</strong> <a href="${ig}" target="_blank" style="color:#60a5fa;">Buka Instagram Admin</a></li>
+            <li><strong>TikTok:</strong> <a href="${tt}" target="_blank" style="color:#60a5fa;">Buka TikTok Admin</a></li>
+          </ul>
+          <h4>Jam Layanan</h4>
+          <p>Verifikasi pembayaran dan ACC diproses setiap hari pukul <strong>${jam}</strong>.</p>
+        `
+      },
+      faq: {
+        judul: "Panduan Order & FAQ",
+        isi: `
+          <h4>Bagaimana cara klaim Free Trial?</h4>
+          <p>Klik kartu produk <strong>Harga Role Apk Xentrix</strong> → pilih <strong>🎁 FREE TRIAL</strong> → masukkan username yang diinginkan → klik Konfirmasi dan tunggu admin ACC.</p>
+          <h4>Bagaimana jika halaman tertutup sebelum data muncul?</h4>
+          <p>Buka menu <strong>Riwayat</strong> di bagian atas website. Pesanan kamu otomatis tersimpan di perangkat tersebut, atau masukkan kode ID pesanan di kolom pencarian.</p>
+        `
+      }
+    };
+
+    const data = konten[tipe];
+    if (!data) return;
+    document.getElementById("modal-legal-title").innerText = data.judul;
+    document.getElementById("modal-legal-content").innerHTML = data.isi;
+    document.getElementById("modal-legal").style.display = "flex";
+  }
+
+  function tutupModalLegal() { document.getElementById("modal-legal").style.display = "none"; }
+
+  function tampilkanHalaman(idHalaman) {
+    ["catalog-page", "trial-checkout-page", "paid-checkout-page", "status-page", "history-page"].forEach(id => {
+      document.getElementById(id).style.display = (id === idHalaman) ? "block" : "none";
+    });
+    if (idHalaman !== "status-page" && intervalCekStatus) clearInterval(intervalCekStatus);
+  }
+
+  function bukaModalHarga() {
+    if (appConfig && !appConfig.tokoBuka) {
+      return alert("Maaf, toko sedang tutup sementara.");
+    }
+    document.getElementById("modal-harga").style.display = "flex";
+  }
+  function tutupModalHarga() { document.getElementById("modal-harga").style.display = "none"; }
+
+  function keHalamanCheckout() {
+    if (!paketTerpilih) return;
+    tutupModalHarga();
+
+    if (paketTerpilih.isTrial) {
+      if (localStorage.getItem("xentrix_trial_claimed") === "true") {
+        alert("Perangkat ini sudah pernah mengklaim Free Trial! Silakan pilih paket role berbayar lainnya.");
+        return bukaModalHarga();
+      }
+      document.getElementById("trial-info-desc").innerText = paketTerpilih.deskripsi;
+      tampilkanHalaman("trial-checkout-page");
+    } else {
+      document.getElementById("checkout-role-name").innerText = paketTerpilih.nama;
+      document.getElementById("checkout-total").innerText = formatRupiah(paketTerpilih.harga);
+      tampilkanHalaman("paid-checkout-page");
+    }
+  }
+
+  function simpanIdKeRiwayatLokal(orderId) {
+    let daftarId = JSON.parse(localStorage.getItem("xentrix_buyer_orders") || "[]");
+    if (!daftarId.includes(orderId)) {
+      daftarId.unshift(orderId);
+      localStorage.setItem("xentrix_buyer_orders", JSON.stringify(daftarId));
+    }
+  }
+
+  async function kirimRequestTrial() {
+    const usernameApk = document.getElementById("trial-username").value.trim();
+    if (!usernameApk) return alert("Harap isi Nama Username untuk login ke aplikasi!");
+
+    const btn = document.getElementById("btn-submit-trial");
+    btn.disabled = true;
+    btn.innerText = "Mengirim ke Admin...";
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isTrial: true, roleNama: "FREE TRIAL", harga: 0, usernameApk })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem("xentrix_trial_claimed", "true");
+        simpanIdKeRiwayatLokal(data.order.id);
+        tampilkanStatusPesanan(data.order);
+      } else {
+        if (res.status === 403) localStorage.setItem("xentrix_trial_claimed", "true");
+        alert(data.message || "Gagal mengajukan Free Trial.");
+      }
+    } catch (err) {
+      alert("Gagal terhubung ke server API!");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Konfirmasi Free Trial";
+    }
+  }
+
+  async function kirimRequestPaid() {
+    const usernameApk = document.getElementById("paid-username").value.trim();
+    const kontak = document.getElementById("paid-contact").value.trim();
+
+    if (!usernameApk) return alert("Harap isi Username untuk login ke aplikasi!");
+    if (!kontak) return alert("Harap isi Nomor WhatsApp / Kontak aktif!");
+
+    const btn = document.getElementById("btn-submit-paid");
+    btn.disabled = true;
+    btn.innerText = "Mengirim ke Admin...";
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isTrial: false,
+          roleNama: paketTerpilih.nama,
+          harga: paketTerpilih.harga,
+          usernameApk,
+          kontak,
+          metodeBayar: "QRIS"
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        simpanIdKeRiwayatLokal(data.order.id);
+        tampilkanStatusPesanan(data.order);
+      } else {
+        alert(data.message || "Gagal mengirim pesanan.");
+      }
+    } catch (err) {
+      alert("Gagal terhubung ke server API!");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Konfirmasi Pembayaran";
+    }
+  }
+
+  function tampilkanStatusPesanan(order) {
+    document.getElementById("track-id").innerText = order.id;
+    document.getElementById("track-role").innerText = order.roleNama;
+    document.getElementById("track-username").innerText = order.usernameApk || "-";
+    document.getElementById("track-harga").innerText = formatRupiah(order.harga);
+    document.getElementById("buyer-delivery-box").style.display = "none";
+    document.getElementById("buyer-rejected-box").style.display = "none";
+    
+    updateTampilanOrderPembeli(order);
+    tampilkanHalaman("status-page");
+
+    intervalCekStatus = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/orders/${order.id}`);
+        const data = await res.json();
+        if (data.order) {
+          updateTampilanOrderPembeli(data.order);
+          if (data.order.status !== "PENDING") clearInterval(intervalCekStatus);
+        }
+      } catch (e) {}
+    }, 3000);
+  }
+
+  function updateTampilanOrderPembeli(order) {
+    const el = document.getElementById("track-status");
+    el.className = `status-badge status-${order.status}`;
+
+    if (order.status === "PENDING") {
+      el.innerText = "MENUNGGU ACC ADMIN";
+    } else if (order.status === "ACC") {
+      el.innerText = "DI-ACC ADMIN (AKTIF)";
+      document.getElementById("buyer-delivery-box").style.display = "block";
+      document.getElementById("buyer-delivery-text").innerText = order.dataAdmin || "Akun aktif. Silakan login di APK Xentrix.";
+    } else if (order.status === "DITOLAK") {
+      el.innerText = "DITOLAK ADMIN";
+      document.getElementById("buyer-rejected-box").style.display = "block";
+      document.getElementById("buyer-rejected-reason").innerText = order.dataAdmin || "Permintaan ditolak admin.";
+    }
+  }
+
+  function salinTeksLangsung(teks) {
+    navigator.clipboard.writeText(teks);
+    alert("Data berhasil disalin!");
+  }
+
+  function bukaHalamanRiwayat() {
+    document.getElementById("history-search-input").value = "";
+    tampilkanHalaman("history-page");
+    muatRiwayatPelanggan();
+  }
+
+  async function muatRiwayatPelanggan(keyword = "") {
+    const container = document.getElementById("history-list");
+    container.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">Memuat riwayat...</p>`;
+
+    const idsTersimpan = JSON.parse(localStorage.getItem("xentrix_buyer_orders") || "[]");
+
+    if (!keyword && idsTersimpan.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">Belum ada riwayat di perangkat ini. Masukkan ID Request (contoh: TRIAL-123456) di kolom atas jika kamu klaim dari perangkat lain.</p>`;
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/orders/history`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: idsTersimpan, keyword })
+      });
+      const data = await res.json();
+
+      if (!data.orders || data.orders.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">Riwayat tidak ditemukan.</p>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      data.orders.forEach(order => {
+        const div = document.createElement("div");
+        div.className = "order-item";
+
+        let blokDataAdmin = "";
+        if (order.status === "ACC") {
+          const dataAman = (order.dataAdmin || "Akun aktif.").replace(/`/g, "\\`");
+          blokDataAdmin = `
+            <div style="margin-top: 8px;">
+              <span style="font-size: 12px; color: var(--success); font-weight: 600;">✓ Data Akun dari Admin:</span>
+              <div class="sent-data-preview">${order.dataAdmin || "Akun aktif."}</div>
+              <button class="btn btn-acc" style="width: 100%; margin-top: 8px; padding: 7px;" onclick="salinTeksLangsung(\`${dataAman}\`)">Salin Data</button>
+            </div>
+          `;
+        } else if (order.status === "DITOLAK") {
+          blokDataAdmin = `
+            <div style="margin-top: 8px; font-size: 12px; color: #fca5a5;">
+              Alasan ditolak: <strong>${order.dataAdmin || "Ditolak admin."}</strong>
+            </div>
+          `;
+        } else {
+          blokDataAdmin = `
+            <div style="margin-top: 6px; font-size: 12px; color: var(--warning);">
+              ⏳ Menunggu ACC & data dari admin...
+            </div>
+          `;
+        }
+
+        div.innerHTML = `
+          <div class="order-top">
+            <strong>${order.id} - ${order.roleNama}</strong>
+            <span class="status-badge status-${order.status}">${order.status}</span>
+          </div>
+          <div class="order-meta">
+            Username APK: <strong style="color: #60a5fa;">${order.usernameApk || '-'}</strong><br>
+            Biaya: <strong style="color: var(--success);">${formatRupiah(order.harga)}</strong> • ${order.waktu}
+          </div>
+          ${blokDataAdmin}
+        `;
+        container.appendChild(div);
+      });
+    } catch (err) {
+      container.innerHTML = `<p style="color: var(--danger); font-size: 13px;">Gagal memuat riwayat dari server.</p>`;
+    }
+  }
+
+  function cariRiwayatManual() {
+    const keyword = document.getElementById("history-search-input").value.trim();
+    muatRiwayatPelanggan(keyword);
+  }
+
+  muatKonfigurasiWeb();
+</script>
+
+</body>
+</html>
